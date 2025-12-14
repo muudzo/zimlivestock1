@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api import auth
+from app.database import create_db_and_tables
 
 app = FastAPI(
     title="ZimLivestock API",
@@ -20,6 +22,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+
+app.include_router(auth.router)
 
 @app.get("/")
 async def root():
