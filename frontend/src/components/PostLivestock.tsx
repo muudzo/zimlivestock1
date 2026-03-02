@@ -369,4 +369,3 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
     </div>
   );
 }
-\ No newline at end of file

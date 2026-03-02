@@ -301,4 +301,3 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
     </div>
   );
 }
-\ No newline at end of file

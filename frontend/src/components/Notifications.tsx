@@ -259,4 +259,3 @@ export function Notifications() {
     </div>
   );
 }
-\ No newline at end of file

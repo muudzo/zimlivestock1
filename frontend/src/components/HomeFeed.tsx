@@ -417,4 +417,3 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
     </div>
   );
 }
-\ No newline at end of file
