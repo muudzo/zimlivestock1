@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuthStore } from '@/stores/authStore';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -12,14 +13,49 @@ interface AuthScreenProps {
 
 export function AuthScreen({ onLogin }: AuthScreenProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
+  const login = useAuthStore(state => state.login);
+  const register = useAuthStore(state => state.register);
+
+  // State for login form
+  const [loginContact, setLoginContact] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // State for signup form
+  const [signupFirstName, setSignupFirstName] = useState('');
+  const [signupLastName, setSignupLastName] = useState('');
+  const [signupPhone, setSignupPhone] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    onLogin();
+
+    try {
+      if (activeTab === 'login') {
+        await login(loginContact, loginPassword);
+      } else {
+        const firstName = (document.getElementById('firstname') as HTMLInputElement)?.value;
+        const lastName = (document.getElementById('lastname') as HTMLInputElement)?.value;
+        const email = (document.getElementById('signup-email') as HTMLInputElement)?.value;
+        const phone = (document.getElementById('signup-phone') as HTMLInputElement)?.value;
+        const password = (document.getElementById('signup-password') as HTMLInputElement)?.value;
+
+        await register({
+          firstName,
+          lastName,
+          email,
+          phone,
+          password
+        });
+      }
+      onLogin();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -44,12 +80,12 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="login" className="space-y-4">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
@@ -60,6 +96,8 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
                         id="login-contact"
                         placeholder="0771234567 or email@example.com"
                         className="pl-10 h-12"
+                        value={loginContact}
+                        onChange={(e) => setLoginContact(e.target.value)}
                         required
                       />
                     </div>
@@ -71,11 +109,13 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
                       type="password"
                       placeholder="Enter your password"
                       className="h-12"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
                       required
                     />
                   </div>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full h-12"
                     disabled={isLoading}
                   >
@@ -83,7 +123,7 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
                   </Button>
                 </form>
               </TabsContent>
-              
+
               <TabsContent value="signup" className="space-y-4">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -93,6 +133,8 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
                         id="firstname"
                         placeholder="John"
                         className="h-12"
+                        value={signupFirstName}
+                        onChange={(e) => setSignupFirstName(e.target.value)}
                         required
                       />
                     </div>
@@ -102,6 +144,8 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
                         id="lastname"
                         placeholder="Mukamuri"
                         className="h-12"
+                        value={signupLastName}
+                        onChange={(e) => setSignupLastName(e.target.value)}
                         required
                       />
                     </div>
@@ -114,6 +158,8 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
                         id="signup-phone"
                         placeholder="0771234567"
                         className="pl-10 h-12"
+                        value={signupPhone}
+                        onChange={(e) => setSignupPhone(e.target.value)}
                         required
                       />
                     </div>
@@ -127,6 +173,8 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
                         type="email"
                         placeholder="john@example.com"
                         className="pl-10 h-12"
+                        value={signupEmail}
+                        onChange={(e) => setSignupEmail(e.target.value)}
                         required
                       />
                     </div>
@@ -138,11 +186,13 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
                       type="password"
                       placeholder="Create a password"
                       className="h-12"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
                       required
                     />
                   </div>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full h-12"
                     disabled={isLoading}
                   >
@@ -153,7 +203,7 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
             </Tabs>
           </CardContent>
         </Card>
-        
+
         <p className="text-center text-sm text-muted-foreground">
           By continuing, you agree to our Terms of Service and Privacy Policy
         </p>

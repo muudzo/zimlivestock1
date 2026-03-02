@@ -20,7 +20,10 @@ class User(UserBase, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
-    livestock_items: List["LivestockItem"] = Relationship(back_populates="seller")
+    livestock_items: List["LivestockItem"] = Relationship(
+        back_populates="seller",
+        sa_relationship_kwargs={"foreign_keys": "[LivestockItem.seller_id]"}
+    )
     bids: List["Bid"] = Relationship(back_populates="bidder")
 
 class LivestockItemBase(SQLModel):
@@ -43,7 +46,12 @@ class LivestockItem(LivestockItemBase, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     seller_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    seller: Optional[User] = Relationship(back_populates="livestock_items")
+    seller: Optional[User] = Relationship(
+        back_populates="livestock_items", 
+        sa_relationship_kwargs={"foreign_keys": "[LivestockItem.seller_id]"}
+    )
+    
+    winner_id: Optional[int] = Field(default=None, foreign_key="user.id")
     
     bids: List["Bid"] = Relationship(back_populates="livestock")
 

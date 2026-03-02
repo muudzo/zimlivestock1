@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { authAPI } from '@/services/api';
 
 interface User {
     id: string;
@@ -33,13 +34,12 @@ export const useAuthStore = create<AuthState>()(
             login: async (contact, password) => {
                 set({ isLoading: true });
                 try {
-                    // Mock login for now or call your API
-                    // const response = await fetch('/api/auth/login', { ... });
-                    // const data = await response.json();
-                    const mockUser = { id: '1', email: 'user@example.com', firstName: 'John', lastName: 'Doe' };
+                    const data = await authAPI.login({ contact, password });
+                    // Our fake token is "fake-jwt-token-for-ID"
+                    const userId = data.access_token.split('-').pop();
                     set({
-                        user: mockUser,
-                        token: 'mock-token',
+                        user: { id: userId, email: contact, firstName: 'User', lastName: 'Name' },
+                        token: data.access_token,
                         isAuthenticated: true,
                         isLoading: false
                     });
@@ -52,9 +52,12 @@ export const useAuthStore = create<AuthState>()(
             register: async (userData) => {
                 set({ isLoading: true });
                 try {
-                    const mockUser = { id: '1', ...userData };
+                    const user = await authAPI.register({
+                        ...userData,
+                        password: userData.password || 'password123' // fallback for mock
+                    });
                     set({
-                        user: mockUser,
+                        user,
                         token: 'mock-token',
                         isAuthenticated: true,
                         isLoading: false
