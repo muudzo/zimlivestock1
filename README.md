@@ -1,252 +1,263 @@
-# ZimLivestock - Zimbabwe's Premier Livestock Marketplace
+# ZimLivestock API 🐄
 
-A modern, responsive web application connecting farmers across Zimbabwe to buy and sell livestock through an intuitive auction system.
-
-## 🚀 Features
-
-### Core Features
-- **Livestock Auctions**: Real-time bidding system for cattle, goats, sheep, pigs, and chickens
-- **User Authentication**: Secure login/registration with phone and email verification
-- **Advanced Search & Filtering**: Find livestock by category, location, price range, and more
-- **Real-time Notifications**: Get notified about bids, auction endings, and messages
-- **Messaging System**: Direct communication between buyers and sellers
-- **Image Upload**: High-quality photo management for livestock listings
-- **Mobile-First Design**: Optimized for all devices and screen sizes
-
-### Technical Features
-- **TypeScript**: Full type safety and better developer experience
-- **React 18**: Latest React features with concurrent rendering
-- **Vite**: Fast build tool and development server
-- **Tailwind CSS**: Utility-first CSS framework with custom design system
-- **Zustand**: Lightweight state management
-- **React Query**: Powerful data fetching and caching
-- **Error Boundaries**: Graceful error handling
-- **PWA Ready**: Progressive Web App capabilities
-- **SEO Optimized**: Meta tags, structured data, and performance
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS, shadcn/ui components
-- **State Management**: Zustand, React Query
-- **Build Tool**: Vite
-- **Testing**: Vitest, React Testing Library
-- **Code Quality**: ESLint, Prettier, Husky
-- **Deployment**: Vercel, Netlify, or any static hosting
-
-## 📦 Installation
-
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Git
-
-### Setup Instructions
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-org/zimlivestock.git
-   cd zimlivestock
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp env.example .env.local
-   ```
-   Edit `.env.local` with your configuration values.
-
-4. **Start development server**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-5. **Open your browser**
-   Navigate to `http://localhost:3000`
-
-## 🧪 Testing
-
-```bash
-# Run tests
-npm run test
-
-# Run tests with UI
-npm run test:ui
-
-# Run tests with coverage
-npm run test:coverage
-```
-
-## 📝 Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint errors
-- `npm run format` - Format code with Prettier
-- `npm run type-check` - Run TypeScript type checking
-- `npm run test` - Run tests
-- `npm run test:ui` - Run tests with UI
-- `npm run test:coverage` - Run tests with coverage
-
-## 🏗️ Project Structure
-
-```
-zimlivestock/
-├── components/          # React components
-│   ├── ui/             # shadcn/ui components
-│   ├── figma/          # Figma-specific components
-│   └── ...             # Feature components
-├── src/
-│   ├── hooks/          # Custom React hooks
-│   ├── lib/            # Utility functions
-│   ├── services/       # API services
-│   ├── stores/         # Zustand stores
-│   ├── types/          # TypeScript type definitions
-│   └── styles/         # Global styles
-├── guidelines/         # Project guidelines
-├── public/             # Static assets
-└── ...                 # Configuration files
-```
-
-## 🎨 Design System
-
-The application uses a comprehensive design system built with:
-- **Tailwind CSS** for utility-first styling
-- **shadcn/ui** for pre-built components
-- **Custom CSS variables** for theming
-- **Responsive design** principles
-- **Accessibility** best practices
-
-### Color Palette
-- **Primary**: Green (#16a34a) - Represents agriculture and growth
-- **Secondary**: Gray (#64748b) - Neutral and professional
-- **Accent**: Blue (#3b82f6) - Trust and reliability
-- **Destructive**: Red (#ef4444) - Warnings and errors
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env.local` file with the following variables:
-
-```env
-# API Configuration
-VITE_API_BASE_URL=https://api.zimlivestock.com
-VITE_API_TIMEOUT=10000
-
-# Authentication
-VITE_AUTH_DOMAIN=auth.zimlivestock.com
-VITE_AUTH_CLIENT_ID=your-auth-client-id
-
-# Feature Flags
-VITE_ENABLE_CHAT=true
-VITE_ENABLE_NOTIFICATIONS=true
-VITE_MOCK_API=true
-```
-
-### Build Configuration
-
-The project uses Vite for building. Key configurations:
-
-- **TypeScript**: Strict mode enabled
-- **Path Aliases**: Configured for clean imports
-- **Code Splitting**: Automatic chunk optimization
-- **Source Maps**: Enabled for debugging
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-### Netlify
-
-1. Connect your GitHub repository to Netlify
-2. Set build command: `npm run build`
-3. Set publish directory: `dist`
-4. Configure environment variables
-
-### Manual Deployment
-
-```bash
-# Build the project
-npm run build
-
-# The built files will be in the `dist` directory
-# Upload the contents to your web server
-```
-
-## 📱 PWA Features
-
-The application is PWA-ready with:
-- **Service Worker**: Offline functionality
-- **Web App Manifest**: App-like experience
-- **Install Prompt**: Add to home screen
-- **Offline Support**: Basic offline functionality
-
-## 🔒 Security
-
-- **Input Validation**: All user inputs are validated
-- **XSS Protection**: Content Security Policy
-- **HTTPS Only**: Secure connections required
-- **Token-based Auth**: JWT authentication
-- **Rate Limiting**: API rate limiting protection
-
-## 📊 Performance
-
-- **Lazy Loading**: Components and routes
-- **Image Optimization**: WebP format support
-- **Code Splitting**: Automatic bundle splitting
-- **Caching**: React Query caching
-- **CDN Ready**: Static asset optimization
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Code Style
-
-- Use TypeScript for all new code
-- Follow ESLint and Prettier configurations
-- Write meaningful commit messages
-- Add tests for new features
-- Update documentation as needed
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Documentation**: [docs.zimlivestock.com](https://docs.zimlivestock.com)
-- **Issues**: [GitHub Issues](https://github.com/your-org/zimlivestock/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/zimlivestock/discussions)
-- **Email**: support@zimlivestock.com
-
-## 🙏 Acknowledgments
-
-- [shadcn/ui](https://ui.shadcn.com/) for the component library
-- [Tailwind CSS](https://tailwindcss.com/) for the styling framework
-- [Vite](https://vitejs.dev/) for the build tool
-- [Unsplash](https://unsplash.com/) for stock photos
-- All contributors and farmers who provided feedback
+> **Zimbabwe's Premier Livestock Marketplace** — A RESTful backend for online livestock auctions, enabling farmers and buyers across Zimbabwe to connect, list animals, and bid in real-time.
 
 ---
 
-Built with ❤️ for the Zimbabwe farming community
+## Table of Contents
+
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Data Models](#data-models)
+- [API Endpoints](#api-endpoints)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [Supported Livestock Categories](#supported-livestock-categories)
+- [Business Logic](#business-logic)
+- [Roadmap / Known Limitations](#roadmap--known-limitations)
+
+---
+
+## Overview
+
+ZimLivestock is a **FastAPI**-powered backend that serves as the engine for a livestock auctioning platform built for the Zimbabwean market. It supports:
+
+- **User registration & login** with password hashing
+- **Livestock listings** — create, browse, filter by category, and delete
+- **Bidding system** — place bids that enforce minimum increments and update the current bid in real time
+- **Auction time tracking** — helpers to compute time-left, detect ending-soon windows, and flag concluded auctions
+- **Phone number validation** specific to Zimbabwean number formats (`+263` or `07x` prefixes)
+
+The backend was converted from a TypeScript/React frontend codebase (see comments in `utils/common.py` and `types/index.py`) and is structured as an MVP with planned production hardening.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Web Framework | [FastAPI](https://fastapi.tiangolo.com/) |
+| ORM / Models | [SQLModel](https://sqlmodel.tiangolo.com/) (Pydantic + SQLAlchemy) |
+| Database | SQLite (`database.db`) |
+| Auth | JWT tokens (placeholder `python-jose`), `passlib[bcrypt]` for hashing |
+| Validation | Pydantic v2 |
+| HTTP Client | `httpx` (for outbound requests, e.g. external payment APIs) |
+| Server | Uvicorn (ASGI) |
+
+---
+
+## Project Structure
+
+```
+zimlivestock1/
+├── app/
+│   ├── main.py            # FastAPI app factory, CORS, router registration
+│   ├── database.py        # SQLite engine, session dependency
+│   ├── models.py          # SQLModel ORM models (User, LivestockItem, Bid)
+│   ├── api/
+│   │   ├── auth.py        # /auth — register, login
+│   │   ├── listings.py    # /livestock — CRUD for livestock listings
+│   │   └── bids.py        # /bids — place & retrieve bids
+│   ├── types/
+│   │   └── index.py       # Python TypedDicts mirroring frontend TS types
+│   └── utils/
+│       └── common.py      # Utility functions (currency, date, validation, auction logic)
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## Data Models
+
+### User
+| Field | Type | Notes |
+|---|---|---|
+| `id` | int (PK) | Auto-generated |
+| `firstName` | str | |
+| `lastName` | str | |
+| `email` | str | Unique, indexed |
+| `phone` | str | Zimbabwean format |
+| `avatar` | str (optional) | URL |
+| `location` | str (optional) | |
+| `verified` | bool | Default: `False` |
+| `password_hash` | str | bcrypt hashed |
+| `created_at` | datetime | |
+| `updated_at` | datetime | |
+
+### LivestockItem
+| Field | Type | Notes |
+|---|---|---|
+| `id` | int (PK) | Auto-generated |
+| `title` | str | e.g. "Prime Brahman Bull" |
+| `breed` | str | |
+| `age` | str | |
+| `weight` | str | |
+| `location` | str | |
+| `startingPrice` | float | USD |
+| `currentBid` | float | Default: 0.0 |
+| `category` | str | See categories below |
+| `description` | str (optional) | |
+| `imageUrl` | str | |
+| `auctionEndDate` | datetime | |
+| `healthStatus` | str | `verified` / `pending` / `unverified` |
+| `seller_id` | int (FK) | References `User` |
+
+### Bid
+| Field | Type | Notes |
+|---|---|---|
+| `id` | int (PK) | Auto-generated |
+| `amount` | float | USD |
+| `timestamp` | datetime | |
+| `isWinning` | bool | Default: `False` |
+| `bidder_id` | int (FK) | References `User` |
+| `livestock_id` | int (FK) | References `LivestockItem` |
+
+---
+
+## API Endpoints
+
+### Auth — `/auth`
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/auth/register` | Register a new user |
+| `POST` | `/auth/login` | Login with email + password, returns JWT token |
+
+### Livestock Listings — `/livestock`
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/livestock/` | List all livestock (pagination: `offset`, `limit`; filter: `category`) |
+| `POST` | `/livestock/` | Create a new livestock listing |
+| `GET` | `/livestock/{item_id}` | Get a single listing by ID |
+| `DELETE` | `/livestock/{item_id}` | Delete a listing |
+
+### Bids — `/bids`
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/bids/livestock/{item_id}` | Get all bids for a listing, sorted by amount descending |
+| `POST` | `/bids/` | Place a bid on a listing |
+
+### System
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/` | Welcome message |
+| `GET` | `/health` | Health check |
+
+**Interactive Docs**: When running locally, visit `http://localhost:8000/docs` (Swagger UI) or `http://localhost:8000/redoc`.
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Python 3.10+
+- `pip`
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone <repo-url>
+cd zimlivestock1
+
+# 2. Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Start the server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+The API will be live at `http://localhost:8000`.
+
+### Quick Test
+
+```bash
+# Register a user
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"John","lastName":"Moyo","email":"john@example.com","phone":"+263771234567","password":"secret123"}'
+
+# Login
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"contact":"john@example.com","password":"secret123"}'
+```
+
+---
+
+## Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| Database | `database.db` (SQLite) | File-based, auto-created on first run |
+| CORS Origins | `localhost:3000`, `localhost:8000` | Update in `main.py` for production |
+| JWT Secret | Placeholder | Replace with `python-jose` + secret key for production |
+
+---
+
+## Supported Livestock Categories
+
+| Category | Icon |
+|---|---|
+| `cattle` | 🐄 |
+| `goats` | 🐐 |
+| `sheep` | 🐑 |
+| `pigs` | 🐷 |
+| `chickens` | 🐔 |
+| `horses` | 🐎 |
+| `donkeys` | 🦙 |
+
+---
+
+## Business Logic
+
+### Bid Increment Rules (`utils/common.py`)
+The minimum bid increment is dynamically calculated based on the current bid:
+
+| Current Bid | Minimum Increment |
+|---|---|
+| < $100 | $10 |
+| $100 – $499 | $25 |
+| $500 – $999 | $50 |
+| $1,000 – $4,999 | $100 |
+| ≥ $5,000 | 5% of current bid |
+
+### Phone Validation
+Accepts Zimbabwean mobile numbers only:
+- Format: `+2637[7-8]XXXXXXX` or `07[7-8]XXXXXXX`
+
+### Auction State Helpers
+- `isAuctionEnding(endDate, hours=24)` — returns `True` if auction closes within the given hours
+- `isAuctionEnded(endDate)` — returns `True` if auction end date has passed
+- `formatTimeLeft(endDate)` — returns human-readable countdown (e.g. `"2d 4h"`, `"45m"`, `"Ended"`)
+
+---
+
+## Roadmap / Known Limitations
+
+| Item | Status | Notes |
+|---|---|---|
+| Password hashing | ⚠️ Placeholder | Replace mock hash with `passlib[bcrypt]` |
+| JWT tokens | ⚠️ Placeholder | Implement proper `python-jose` JWTs with secret key |
+| Database | ⚠️ MVP | Migrate SQLite → PostgreSQL for production |
+| Payments | 🔲 Planned | Paynow integration (see `PAYNOW_INTEGRATION.md`) |
+| WebSockets | 🔲 Planned | Real-time bid updates |
+| File uploads | 🔲 Planned | Animal image uploads to S3/Supabase Storage |
+| Notifications | 🔲 Planned | SMS/email alerts for outbid, auction won |
+| Seller ratings | 🔲 Planned | Review and rating system |
+| Health verification | 🔲 Planned | Vet certificate upload and approval workflow |
+
+---
+
+## Attributions
+
+See [Attributions.md](./Attributions.md) for third-party library credits.
+
+---
+
+*Built for Zimbabwe's farming community 🇿🇼*

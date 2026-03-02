@@ -1,6 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, listings, bids
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file (if present)
+load_dotenv()
+
+from app.api import auth, listings, bids, payments
 from app.database import create_db_and_tables
 
 app = FastAPI(
@@ -30,6 +36,7 @@ def on_startup():
 app.include_router(auth.router)
 app.include_router(listings.router)
 app.include_router(bids.router)
+app.include_router(payments.router)
 
 
 
