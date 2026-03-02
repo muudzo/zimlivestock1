@@ -1,0 +1,115 @@
+{
+  "name": "ZimLivestock - Zimbabwe's Premier Livestock Marketplace",
+  "short_name": "ZimLivestock",
+  "description": "Connect with farmers across Zimbabwe to buy and sell livestock",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": [
+    "shopping",
+    "productivity"
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Livestock",
+      "short_name": "Browse",
+      "description": "Browse available livestock listings",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/shortcut-browse.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "My Listings",
+      "short_name": "My Listings",
+      "description": "View and manage your livestock listings",
+      "url": "/listings",
+      "icons": [
+        {
+          "src": "/shortcut-listings.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "short_name": "Payments",
+      "description": "Check your payment history",
+      "url": "/payments",
+      "icons": [
+        {
+          "src": "/shortcut-payments.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "prefer_related_applications": false
+}

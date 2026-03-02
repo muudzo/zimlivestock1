@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
+import { useAuthStore } from '@/stores/authStore';
+import { paymentAPI } from '@/services/api';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -88,11 +90,37 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  const { user, isAuthenticated } = useAuthStore();
+  const [isPaying, setIsPaying] = useState(false);
+
   const handlePlaceBid = () => {
     const amount = parseInt(bidAmount);
     if (amount >= minimumBid) {
       // Simulate bid placement
       alert(`Bid of ${formatCurrency(amount)} placed successfully!`);
+    }
+  };
+
+  const handlePayNow = async () => {
+    if (!isAuthenticated || !user) {
+      alert('Please login to make a payment');
+      return;
+    }
+    setIsPaying(true);
+    try {
+      const res = await paymentAPI.initiate({
+        livestock_id: livestockItem.id,
+        bid_id: bidHistory[0] ? parseInt(bidHistory[0].id) : 0,
+        payer_id: parseInt(user.id),
+        payment_method: 'web'
+      });
+      alert(`Payment started! Reference: ${res.reference}`);
+    } catch (err: any) {
+      console.error(err);
+      const msg = err?.response?.data?.detail || err?.message || 'Payment failed';
+      alert(msg);
+    } finally {
+      setIsPaying(false);
     }
   };
 
@@ -296,6 +324,17 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
           >
             Place Bid
           </Button>
+          {/* Pay button shown for logged-in users */}
+          {isAuthenticated && (
+            <Button
+              className="h-12 px-8"
+              variant="secondary"
+              onClick={handlePayNow}
+              disabled={isPaying}
+            >
+              {isPaying ? 'Processing...' : 'Pay Now'}
+            </Button>
+          )}
         </div>
       </div>
     </div>
