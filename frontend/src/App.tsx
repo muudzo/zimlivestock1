@@ -6,6 +6,7 @@ import { PostLivestock } from '@/components/PostLivestock';
 import { MyListings } from '@/components/MyListings';
 import { Notifications } from '@/components/Notifications';
 import { BottomNavigation } from '@/components/BottomNavigation';
+import { PaymentStatus } from '@/components/PaymentStatus';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
 import { LivestockItem } from './types';
@@ -17,6 +18,16 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState('home');
   const [currentScreen, setCurrentScreen] = useState<'main' | 'bidding'>('main');
   const [selectedLivestock, setSelectedLivestock] = useState<LivestockItem | null>(null);
+  const [paymentReference, setPaymentReference] = useState<string | null>(null);
+
+  // detect paynow return URL query param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('reference') || params.get('merchant_reference');
+    if (ref) {
+      setPaymentReference(ref);
+    }
+  }, []);
 
   // Initialize theme on app start
   useEffect(() => {
@@ -47,6 +58,11 @@ export default function App() {
         </div>
       </div>
     );
+  }
+
+  // if we were redirected from Paynow show a status page instead of the app
+  if (paymentReference) {
+    return <PaymentStatus reference={paymentReference} />;
   }
 
   if (!isAuthenticated) {

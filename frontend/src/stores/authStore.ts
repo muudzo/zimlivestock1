@@ -56,8 +56,13 @@ export const useAuthStore = create<AuthState>()(
                         ...userData,
                         password: userData.password || 'password123' // fallback for mock
                     });
+                    // make sure id is stored as string (frontend expects string)
+                    const normalizedUser = {
+                        ...user,
+                        id: String(user.id),
+                    };
                     set({
-                        user,
+                        user: normalizedUser,
                         token: 'mock-token',
                         isAuthenticated: true,
                         isLoading: false

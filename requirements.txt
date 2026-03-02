@@ -8,3 +8,8 @@ passlib[bcrypt]
 httpx
 python-dotenv
 paynow
+
+# testing tools
+pytest
+pytest-asyncio
+email-validator

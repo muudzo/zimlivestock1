@@ -56,19 +56,47 @@ export function MyListings() {
   }, [activeView, user?.id]);
 
   const handlePay = async (item: any) => {
+    toast.info('Preparing payment...');
+
+    // ask which method the user wants
+    let method = window.prompt("Payment method? (web/ecocash/onemoney)", "web");
+    if (!method) {
+      toast.error('Payment cancelled');
+      return;
+    }
+    method = method.toLowerCase();
+    if (!['web', 'ecocash', 'onemoney'].includes(method)) {
+      toast.error('Unsupported method');
+      return;
+    }
+
+    let phone: string | undefined;
+    if (method !== 'web') {
+      phone = window.prompt('Enter phone number for mobile payment', user?.phone || '');
+      if (!phone) {
+        toast.error('Phone number required for mobile payments');
+        return;
+      }
+    }
+
     toast.info('Initiating payment...');
     try {
-      const response = await paymentAPI.initiate({
+      const payload: any = {
         livestock_id: item.id,
-        bid_id: 0, // In a real app, find the winning bid ID
+        bid_id: 0, // placeholder; real logic should supply bid id
         payer_id: Number(user?.id),
-        payment_method: 'web'
-      });
+        payment_method: method,
+      };
+      if (phone) payload.phone = phone;
+
+      const response = await paymentAPI.initiate(payload);
 
       if (response.redirect_url) {
         window.location.href = response.redirect_url;
+      } else if (response.instructions) {
+        toast.success('Follow instructions sent to your phone');
       } else {
-        toast.error('Payment initiation failed: No redirect URL received');
+        toast.error('Payment initiation failed: no actionable result');
       }
     } catch (error: any) {
       console.error('Payment error:', error);

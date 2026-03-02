@@ -10,6 +10,14 @@ load_dotenv()
 
 # ─── Initialise Paynow SDK ────────────────────────────────────────────────────
 
+# warn if environment variables are not configured; this helps developers
+integration_id = os.getenv("PAYNOW_INTEGRATION_ID", "")
+integration_key = os.getenv("PAYNOW_INTEGRATION_KEY", "")
+if not integration_id or not integration_key:
+    # don't raise yet – some parts of the app might import this file before
+    # .env is loaded, but at least print a message so developer notices.
+    print("[WARNING] Paynow credentials are not set. Payment operations will fail until PAYNOW_INTEGRATION_ID and PAYNOW_INTEGRATION_KEY are provided.")
+
 def _get_paynow() -> Paynow:
     """
     Returns a configured Paynow instance.
@@ -55,7 +63,25 @@ def initiate_web_payment(reference: str, email: str, description: str, amount: f
     response = paynow.send(payment)
 
     if not response.success:
-        raise ValueError(f"Paynow web payment initiation failed: {getattr(response, 'error', 'Unknown error')}")
+        # Try to extract error message from various possible attributes
+        error_msg = None
+        
+        # Check response.data dict first (paynow SDK returns error here)
+        if hasattr(response, 'data') and isinstance(response.data, dict):
+            error_msg = response.data.get('error')
+        
+        # Fallback: check response.error attribute
+        if not error_msg and hasattr(response, 'error'):
+            error_attr = getattr(response, 'error')
+            if isinstance(error_attr, str):
+                error_msg = error_attr
+        
+        # Final fallback
+        if not error_msg and hasattr(response, 'status'):
+            error_msg = getattr(response, 'status')
+        
+        error_msg = error_msg or 'Paynow API request failed'
+        raise ValueError(f"Paynow web payment initiation failed: {error_msg}")
 
     return {
         "redirect_url": response.redirect_url,
@@ -94,7 +120,25 @@ def initiate_mobile_payment(reference: str, email: str, description: str,
     response = paynow.send_mobile(payment, phone, method)
 
     if not response.success:
-        raise ValueError(f"Paynow mobile payment initiation failed: {getattr(response, 'error', 'Unknown error')}")
+        # Try to extract error message from various possible attributes
+        error_msg = None
+        
+        # Check response.data dict first (paynow SDK returns error here)
+        if hasattr(response, 'data') and isinstance(response.data, dict):
+            error_msg = response.data.get('error')
+        
+        # Fallback: check response.error attribute
+        if not error_msg and hasattr(response, 'error'):
+            error_attr = getattr(response, 'error')
+            if isinstance(error_attr, str):
+                error_msg = error_attr
+        
+        # Final fallback
+        if not error_msg and hasattr(response, 'status'):
+            error_msg = getattr(response, 'status')
+        
+        error_msg = error_msg or 'Paynow API request failed'
+        raise ValueError(f"Paynow mobile payment initiation failed: {error_msg}")
 
     return {
         "poll_url": response.poll_url,

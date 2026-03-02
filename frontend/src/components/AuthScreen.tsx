@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
+import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -35,24 +36,29 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
     try {
       if (activeTab === 'login') {
         await login(loginContact, loginPassword);
+        toast.success('Logged in successfully');
       } else {
-        const firstName = (document.getElementById('firstname') as HTMLInputElement)?.value;
-        const lastName = (document.getElementById('lastname') as HTMLInputElement)?.value;
-        const email = (document.getElementById('signup-email') as HTMLInputElement)?.value;
-        const phone = (document.getElementById('signup-phone') as HTMLInputElement)?.value;
-        const password = (document.getElementById('signup-password') as HTMLInputElement)?.value;
-
         await register({
-          firstName,
-          lastName,
-          email,
-          phone,
-          password
+          firstName: signupFirstName,
+          lastName: signupLastName,
+          email: signupEmail,
+          phone: signupPhone,
+          password: signupPassword
         });
+        toast.success('Account created');
+        // clear signup form
+        setSignupFirstName('');
+        setSignupLastName('');
+        setSignupEmail('');
+        setSignupPhone('');
+        setSignupPassword('');
       }
+
       onLogin();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const message = err?.response?.data?.detail || err?.message || 'An error occurred';
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
