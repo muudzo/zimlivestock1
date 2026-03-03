@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authAPI } from '@/services/api';
+import { authAPI, setAuthToken } from '@/services/api';
 
 interface User {
     id: string;
@@ -37,7 +37,8 @@ export const useAuthStore = create<AuthState>()(
                 try {
                     const data = await authAPI.login({ contact, password });
                     const token = data.access_token;
-                    set({ token }); // Store token first so interceptor can use it
+                    setAuthToken(token); // Sync with API immediately
+                    set({ token });
 
                     const user = await authAPI.me();
                     // make sure id is stored as string (frontend expects string)
@@ -71,6 +72,7 @@ export const useAuthStore = create<AuthState>()(
 
                     const data = await authAPI.login({ contact: loginContact, password: loginPassword });
                     const token = data.access_token;
+                    setAuthToken(token); // Sync with API immediately
                     set({ token });
 
                     const user = await authAPI.me();
@@ -103,16 +105,23 @@ export const useAuthStore = create<AuthState>()(
                         isLoading: false
                     });
                 } catch (error) {
+                    setAuthToken(null);
                     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
                 }
             },
 
             logout: async () => {
+                setAuthToken(null);
                 set({ user: null, token: null, isAuthenticated: false });
             },
         }),
         {
             name: 'auth-storage',
+            onRehydrateStorage: () => (state) => {
+                if (state?.token) {
+                    setAuthToken(state.token);
+                }
+            }
         }
     )
 );

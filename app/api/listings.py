@@ -13,7 +13,7 @@ class LivestockItemRead(LivestockItemBase):
     bids: List[int] = [] # simplified list of bid IDs
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class LivestockItemCreate(LivestockItemBase):
     pass # seller_id will be taken from token

@@ -3,6 +3,12 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8000";
 
+let internalToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+    internalToken = token;
+};
+
 const api = axios.create({
     baseURL: API_BASE_URL,
 });
@@ -10,16 +16,23 @@ const api = axios.create({
 // Add a request interceptor to attach the token
 api.interceptors.request.use(
     (config) => {
-        const authData = localStorage.getItem('auth-storage');
-        if (authData) {
-            try {
-                const { state } = JSON.parse(authData);
-                if (state.token) {
-                    config.headers.Authorization = `Bearer ${state.token}`;
+        // Prefer in-memory token, then fall back to localStorage
+        let token = internalToken;
+
+        if (!token) {
+            const authData = localStorage.getItem('auth-storage');
+            if (authData) {
+                try {
+                    const { state } = JSON.parse(authData);
+                    token = state.token;
+                } catch (error) {
+                    console.error('Error parsing auth-storage', error);
                 }
-            } catch (error) {
-                console.error('Error parsing auth-storage', error);
             }
+        }
+
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
     },
