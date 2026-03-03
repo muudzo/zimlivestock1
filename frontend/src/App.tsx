@@ -13,12 +13,17 @@ import { LivestockItem } from './types';
 import { Helmet } from 'react-helmet';
 
 export default function App() {
-  const { isAuthenticated, user, isLoading } = useAuthStore();
+  const { isAuthenticated, user, isLoading, checkAuth } = useAuthStore();
   const { theme, setTheme } = useAppStore();
   const [currentTab, setCurrentTab] = useState('home');
   const [currentScreen, setCurrentScreen] = useState<'main' | 'bidding'>('main');
   const [selectedLivestock, setSelectedLivestock] = useState<LivestockItem | null>(null);
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
+
+  // Initialize auth
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   // detect paynow return URL query param
   useEffect(() => {

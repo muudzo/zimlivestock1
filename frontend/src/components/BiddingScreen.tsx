@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { useAuthStore } from '@/stores/authStore';
-import { paymentAPI } from '@/services/api';
+import { paymentAPI, livestockAPI } from '@/services/api';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { 
-  ArrowLeft, 
-  Clock, 
-  MapPin, 
-  Weight, 
-  Calendar, 
-  TrendingUp, 
-  Heart, 
+import {
+  ArrowLeft,
+  Clock,
+  MapPin,
+  Weight,
+  Calendar,
+  TrendingUp,
+  Heart,
   Share,
   MessageCircle,
   Shield,
@@ -38,36 +38,33 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
   const [bidAmount, setBidAmount] = useState('');
   const [timeLeft, setTimeLeft] = useState('2d 5h 23m');
   const [isLiked, setIsLiked] = useState(false);
-  const [bidHistory] = useState<Bid[]>([
-    {
-      id: '1',
-      bidder: 'J. Manyika',
-      amount: 1200,
-      timestamp: new Date(Date.now() - 300000),
-      isWinning: true
-    },
-    {
-      id: '2',
-      bidder: 'R. Chigwamba',
-      amount: 1150,
-      timestamp: new Date(Date.now() - 900000),
-      isWinning: false
-    },
-    {
-      id: '3',
-      bidder: 'P. Mukamuri',
-      amount: 1100,
-      timestamp: new Date(Date.now() - 1800000),
-      isWinning: false
-    },
-    {
-      id: '4',
-      bidder: 'T. Nhongo',
-      amount: 1000,
-      timestamp: new Date(Date.now() - 3600000),
-      isWinning: false
+  const [bidHistory, setBidHistory] = useState<Bid[]>([]);
+  const [isLoadingBids, setIsLoadingBids] = useState(true);
+
+  const fetchBids = async () => {
+    try {
+      const bidsRes = await livestockAPI.getBidsForItem(livestockItem.id);
+      const rawBids = bidsRes.data;
+
+      const formattedBids: Bid[] = rawBids.map((b: any) => ({
+        id: String(b.id),
+        bidder: `User ${b.bidder_id}`, // In a real app, join with user names
+        amount: b.amount,
+        timestamp: new Date(b.timestamp),
+        isWinning: b.isWinning
+      }));
+
+      setBidHistory(formattedBids);
+    } catch (error) {
+      console.error('Failed to fetch bids', error);
+    } finally {
+      setIsLoadingBids(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchBids();
+  }, [livestockItem.id]);
 
   const currentHighestBid = bidHistory[0]?.amount || livestockItem.startingPrice;
   const minimumBid = currentHighestBid + 50;
@@ -83,7 +80,7 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -93,11 +90,19 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
   const { user, isAuthenticated } = useAuthStore();
   const [isPaying, setIsPaying] = useState(false);
 
-  const handlePlaceBid = () => {
+  const handlePlaceBid = async () => {
     const amount = parseInt(bidAmount);
     if (amount >= minimumBid) {
-      // Simulate bid placement
-      alert(`Bid of ${formatCurrency(amount)} placed successfully!`);
+      try {
+        await livestockAPI.placeBid({
+          livestock_id: livestockItem.id,
+          amount: amount
+        });
+        alert(`Bid of ${formatCurrency(amount)} placed successfully!`);
+        fetchBids(); // Refresh bid history
+      } catch (error: any) {
+        alert(error.response?.data?.detail || 'Failed to place bid. Please try again.');
+      }
     }
   };
 
@@ -305,7 +310,7 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
             <p className="font-bold text-lg text-red-600">{timeLeft}</p>
           </div>
         </div>
-        
+
         <div className="flex gap-2">
           <div className="flex-1">
             <Input
@@ -317,7 +322,7 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
               min={minimumBid}
             />
           </div>
-          <Button 
+          <Button
             className="h-12 px-8"
             onClick={handlePlaceBid}
             disabled={parseInt(bidAmount) < minimumBid}

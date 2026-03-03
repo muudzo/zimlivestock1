@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from app.database import get_session
 from app.models import Bid, BidBase, LivestockItem, User, LivestockItemBase
+from app.api.auth import get_current_user
 from typing import List
 
 router = APIRouter(prefix="/bids", tags=["bids"])
@@ -14,7 +15,7 @@ class BidRead(BidBase):
 
 class BidCreate(BidBase):
     livestock_id: int
-    bidder_id: int
+    # bidder_id will be taken from token
 
 @router.get("/livestock/{item_id}", response_model=List[BidRead])
 def read_bids_for_item(item_id: int, session: Session = Depends(get_session)):
@@ -23,22 +24,21 @@ def read_bids_for_item(item_id: int, session: Session = Depends(get_session)):
     return bids
 
 @router.post("/", response_model=BidRead)
-def place_bid(bid: BidCreate, session: Session = Depends(get_session)):
+def place_bid(
+    bid: BidCreate, 
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     item = session.get(LivestockItem, bid.livestock_id)
     if not item:
         raise HTTPException(status_code=404, detail="Livestock item not found")
         
-    user = session.get(User, bid.bidder_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Bidder not found")
-        
-    # Validation: Bid must be higher than current bid + min increment (e.g. 50? Logic from frontend TS: current + 50)
-    # Backend should strictly enforce logic.
-    min_bid = (item.currentBid or item.startingPrice) + 0 # Simple check for now, logic enhancement later
+    # Validation: Bid must be higher than current bid
     if bid.amount <= item.currentBid:
          raise HTTPException(status_code=400, detail="Bid must be higher than current bid")
 
     db_bid = Bid.from_orm(bid)
+    db_bid.bidder_id = current_user.id
     
     # Update Livestock current bid
     item.currentBid = bid.amount

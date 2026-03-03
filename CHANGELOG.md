@@ -2,20 +2,74 @@
 
 ## 3 March 2026
 
-### Permission Fixes
-- Fixed `sqlite3.OperationalError: attempt to write a readonly database` by adjusting file and directory permissions for the SQLite database.
-  - Ran `chmod 664 database.db` on project root database file.
-  - Ran `chmod 775 .` on project root directory to allow directory write access.
-  - Verified write access with a manual `INSERT` using the `sqlite3` CLI.
-  - Provided explanation of how to reset ownership if necessary (`sudo chown $USER database.db`).
-  - Suggested a development "nuclear" fix: deleting the database file and allowing the app to recreate it.
+### Database permission fix
 
-### Pydantic Warning
-- Noted and advised update for Pydantic v2:
-  - Replace `class Config: orm_mode = True` with `model_config = { "from_attributes": True }`.
+**Resolved error**
 
-### Additional Notes
-- Documented that SELECT queries were working while INSERTs were failing due to permissions, confirming the root cause.
-- Included follow-up steps for restarting the FastAPI server and retesting endpoints.
+`sqlite3.OperationalError: attempt to write a readonly database`
 
-*File created to track project changes and fixes.*
+**Root cause**
+
+SQLite database file and/or project directory lacked write permissions, which blocked `INSERT` operations while still allowing `SELECT` queries.
+
+**Resolution**
+
+- Updated database file permissions:
+  - `chmod 664 database.db`
+- Updated project root directory permissions:
+  - `chmod 775 .`
+- Verified write access using the `sqlite3` CLI with a manual `INSERT`
+- Documented ownership reset option:
+  - `sudo chown $USER database.db`
+- Added development fallback:
+  - `rm database.db` (allow the app to recreate the database)
+
+**Result**
+
+User registration (`POST /auth/register`) now completes successfully without 500 errors.
+
+---
+
+### Pydantic v2 migration
+
+**Addressed deprecation warning**
+
+`'orm_mode' has been renamed to 'from_attributes'`
+
+**Configuration change**
+
+Before (Pydantic v1):
+
+```python
+class Config:
+    orm_mode = True
+```
+
+After (Pydantic v2):
+
+```python
+model_config = {
+    "from_attributes": True
+}
+```
+
+---
+
+### Verification
+
+- Restarted FastAPI server
+- Retested:
+  - `POST /auth/register`
+  - `POST /auth/login`
+  - `GET /livestock`
+- Confirmed normal application behavior
+
+---
+
+### Environment
+
+- macOS (Darwin)
+- SQLite
+- FastAPI
+- SQLAlchemy
+- Pydantic v2

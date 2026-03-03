@@ -12,6 +12,7 @@ from sqlmodel import Session, select
 
 from app.database import get_session
 from app.models import LivestockItem, Payment, User
+from app.api.auth import get_current_user
 from app.services import (
     check_payment_status,
     initiate_mobile_payment,
@@ -26,7 +27,7 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 class InitiatePaymentRequest(BaseModel):
     livestock_id: int
     bid_id: int
-    payer_id: int
+    # payer_id from token
     payment_method: str         # "web" | "ecocash" | "onemoney"
     phone: Optional[str] = None # Required for mobile payments
 
@@ -58,6 +59,7 @@ class PaymentHistoryItem(BaseModel):
 def initiate_payment(
     body: InitiatePaymentRequest,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Initiate a Paynow payment for a won auction.
@@ -70,10 +72,8 @@ def initiate_payment(
     if not item:
         raise HTTPException(status_code=404, detail="Livestock item not found")
 
-    # ── Validate payer ──
-    payer = session.get(User, body.payer_id)
-    if not payer:
-        raise HTTPException(status_code=404, detail="User not found")
+    # ── Payer from token ──
+    payer = current_user
 
     # ── Build unique merchant reference ──
     unique_suffix = uuid.uuid4().hex[:8].upper()
@@ -83,7 +83,7 @@ def initiate_payment(
 
     # ── Create pending Payment record ──
     payment = Payment(
-        payer_id=body.payer_id,
+        payer_id=payer.id,
         livestock_id=body.livestock_id,
         bid_id=body.bid_id,
         amount=amount,
@@ -234,14 +234,15 @@ def get_payment_status(reference: str, session: Session = Depends(get_session)):
     )
 
 
-@router.get("/history/{user_id}")
-def get_payment_history(user_id: int, session: Session = Depends(get_session)):
+@router.get("/history")
+def get_payment_history(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     """
-    Returns all payments made by a given user (newest first).
+    Returns all payments made by the authenticated user (newest first).
     """
-    payer = session.get(User, user_id)
-    if not payer:
-        raise HTTPException(status_code=404, detail="User not found")
+    user_id = current_user.id
 
     stmt = select(Payment).where(Payment.payer_id == user_id).order_by(Payment.created_at.desc())
     payments = session.exec(stmt).all()

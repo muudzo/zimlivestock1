@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
+import { livestockAPI } from '@/services/api';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { 
-  ArrowLeft, 
-  Camera, 
-  MapPin, 
-  DollarSign, 
-  Clock, 
+import {
+  ArrowLeft,
+  Camera,
+  MapPin,
+  DollarSign,
+  Clock,
   Upload,
   X
 } from 'lucide-react';
@@ -53,13 +54,27 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitting(false);
-    alert('Livestock posted successfully! Your auction will go live within 24 hours after verification.');
-    onBack();
+
+    try {
+      // Calculate auction end date
+      const days = parseInt(formData.auctionDuration) || 7;
+      const auctionEndDate = new Date();
+      auctionEndDate.setDate(auctionEndDate.getDate() + days);
+
+      await livestockAPI.createListing({
+        ...formData,
+        startingPrice: parseFloat(formData.startingPrice),
+        imageUrl: images[0] || 'https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?w=400&h=300&fit=crop&crop=center',
+        auctionEndDate: auctionEndDate.toISOString(),
+      });
+
+      setIsSubmitting(false);
+      alert('Livestock posted successfully! Your auction is now live.');
+      onBack();
+    } catch (error: any) {
+      setIsSubmitting(false);
+      alert(error.response?.data?.detail || 'Failed to post livestock. Please try again.');
+    }
   };
 
   const categories = [
@@ -79,7 +94,7 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
   ];
 
   const locations = [
-    'Harare', 'Bulawayo', 'Chitungwiza', 'Mutare', 'Gweru', 
+    'Harare', 'Bulawayo', 'Chitungwiza', 'Mutare', 'Gweru',
     'Kwekwe', 'Kadoma', 'Masvingo', 'Chinhoyi', 'Marondera'
   ];
 
@@ -110,8 +125,8 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
             <div className="grid grid-cols-2 gap-4">
               {images.map((image, index) => (
                 <div key={index} className="relative">
-                  <img 
-                    src={image} 
+                  <img
+                    src={image}
                     alt={`Upload ${index + 1}`}
                     className="w-full h-32 object-cover rounded-lg border-2 border-border"
                   />
@@ -167,8 +182,8 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
-                <Select 
-                  value={formData.category} 
+                <Select
+                  value={formData.category}
                   onValueChange={(value) => handleInputChange('category', value)}
                   required
                 >
@@ -249,8 +264,8 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="location">Location *</Label>
-                <Select 
-                  value={formData.location} 
+                <Select
+                  value={formData.location}
                   onValueChange={(value) => handleInputChange('location', value)}
                   required
                 >
@@ -269,8 +284,8 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="health">Health Status *</Label>
-                <Select 
-                  value={formData.healthStatus} 
+                <Select
+                  value={formData.healthStatus}
                   onValueChange={(value) => handleInputChange('healthStatus', value)}
                   required
                 >
@@ -317,8 +332,8 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="duration">Auction Duration *</Label>
-                <Select 
-                  value={formData.auctionDuration} 
+                <Select
+                  value={formData.auctionDuration}
                   onValueChange={(value) => handleInputChange('auctionDuration', value)}
                   required
                 >
@@ -354,8 +369,8 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
 
       {/* Fixed Bottom Submit */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4">
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="w-full h-12"
           disabled={isSubmitting || !formData.title || !formData.category || !formData.breed}
           onClick={handleSubmit}

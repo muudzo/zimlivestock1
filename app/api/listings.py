@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from app.database import get_session
 from app.models import LivestockItem, LivestockItemBase, User
+from app.api.auth import get_current_user
 from typing import List, Optional
 
 router = APIRouter(prefix="/livestock", tags=["livestock"])
@@ -15,7 +16,7 @@ class LivestockItemRead(LivestockItemBase):
         orm_mode = True
 
 class LivestockItemCreate(LivestockItemBase):
-    seller_id: int
+    pass # seller_id will be taken from token
 
 @router.get("/", response_model=List[LivestockItemRead])
 def read_listings(
@@ -32,13 +33,13 @@ def read_listings(
     return listings
 
 @router.post("/", response_model=LivestockItemRead)
-def create_listing(item: LivestockItemCreate, session: Session = Depends(get_session)):
-    # Verify seller exists
-    user = session.get(User, item.seller_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Seller not found")
-        
+def create_listing(
+    item: LivestockItemCreate, 
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     db_item = LivestockItem.from_orm(item)
+    db_item.seller_id = current_user.id
     session.add(db_item)
     session.commit()
     session.refresh(db_item)
@@ -52,10 +53,19 @@ def read_listing(item_id: int, session: Session = Depends(get_session)):
     return item
 
 @router.delete("/{item_id}")
-def delete_listing(item_id: int, session: Session = Depends(get_session)):
+def delete_listing(
+    item_id: int, 
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     item = session.get(LivestockItem, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Check ownership
+    if item.seller_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this listing")
+        
     session.delete(item)
     session.commit()
     return {"ok": True}

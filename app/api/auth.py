@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session, select
 from app.database import get_session
 from app.models import User, UserBase
 from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional, Union
+from typing import Optional, Union, List
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
+import os
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -38,15 +43,58 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# password helpers (mock implementation)
+# Security configurations
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key-for-dev")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 week
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login", auto_error=False)
 
 def hash_password(password: str) -> str:
-    # very simple placeholder; DO NOT use in production
-    return password + "#zmhash"
+    return pwd_context.hash(password)
 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
-def verify_password(plain: str, hashed: str) -> bool:
-    return hashed == plain + "#zmhash"
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), 
+    session: Session = Depends(get_session)
+) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if not token:
+        raise credentials_exception
+        
+    try:
+        # Check if token starts with Bearer
+        if token.startswith("Bearer "):
+            token = token.split(" ")[1]
+            
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+        
+    user = session.get(User, int(user_id))
+    if user is None:
+        raise credentials_exception
+    return user
 
 @router.post("/register", response_model=UserRead)
 def register_user(user: UserCreate, session: Session = Depends(get_session)):
@@ -89,5 +137,12 @@ def login(credentials: UserLogin, session: Session = Depends(get_session)):
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # Return fake token for now (replace with JWT later)
-    return {"access_token": f"fake-jwt-token-for-{user.id}", "token_type": "bearer"}
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": str(user.id)}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/me", response_model=UserRead)
+def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
