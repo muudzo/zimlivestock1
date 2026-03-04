@@ -1,9 +1,17 @@
-from sqlmodel import Session, create_engine
-from app.models import User, LivestockItem, UserBase, LivestockItemBase
+import bcrypt
+from sqlmodel import Session, SQLModel
+from app.models import User, LivestockItem
 from app.database import engine
 from datetime import datetime, timedelta
 
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+
 def seed_db():
+    # Create tables
+    SQLModel.metadata.create_all(engine)
+    
     with Session(engine) as session:
         # Check if we already have users
         if session.query(User).first():
@@ -16,7 +24,7 @@ def seed_db():
             lastName="Chikwanha",
             email="farmer@example.com",
             phone="0771234567",
-            password_hash="passwordhashed", # matches verify_password logic
+            password_hash=hash_password("password"), # matches verify_password logic
             verified=True,
             location="Harare"
         )

@@ -53,6 +53,15 @@ export default function App() {
     setSelectedLivestock(null);
   };
 
+  const handleClearPayment = () => {
+    setPaymentReference(null);
+    // Clean URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('reference');
+    url.searchParams.delete('merchant_reference');
+    window.history.replaceState({}, '', url.pathname);
+  };
+
   // Show loading state while checking authentication
   if (isLoading) {
     return (
@@ -67,7 +76,12 @@ export default function App() {
 
   // if we were redirected from Paynow show a status page instead of the app
   if (paymentReference) {
-    return <PaymentStatus reference={paymentReference} />;
+    return (
+      <PaymentStatus
+        reference={paymentReference}
+        onBack={handleClearPayment}
+      />
+    );
   }
 
   if (!isAuthenticated) {

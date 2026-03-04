@@ -27,6 +27,7 @@ origins = [
     "http://localhost:3005",
     "http://localhost:3006",
     "http://localhost:8000",
+    "https://9594-41-173-195-173.ngrok-free.app",
 ]
 
 app.add_middleware(

@@ -17,6 +17,7 @@ from app.services import (
     check_payment_status,
     initiate_mobile_payment,
     initiate_web_payment,
+    verify_paynow_webhook  # Added for security
 )
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -154,6 +155,11 @@ async def paynow_webhook(request: Request, session: Session = Depends(get_sessio
     """
     form_data = await request.form()
     data = dict(form_data)
+
+    # ── Security: Verify Paynow Hash ──
+    if not verify_paynow_webhook(data):
+        # Log this attempt or raise an alert? 400 is safer to prevent tampering.
+        raise HTTPException(status_code=400, detail="Invalid payment hash")
 
     reference = data.get("reference", "")
     paynow_ref = data.get("paynowreference", "")

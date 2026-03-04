@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Button } from './ui/button';
+import { PaynowButton } from './PaynowButton';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import {
@@ -72,7 +73,7 @@ export function MyListings() {
 
     let phone: string | undefined;
     if (method !== 'web') {
-      phone = window.prompt('Enter phone number for mobile payment', user?.phone || '');
+      phone = window.prompt('Enter phone number for mobile payment', user?.phone || '') || undefined;
       if (!phone) {
         toast.error('Phone number required for mobile payments');
         return;
@@ -228,13 +229,10 @@ export function MyListings() {
                   ) : (
                     <>
                       {listing.healthStatus === 'sold' && (
-                        <Button
-                          className="flex-1 bg-green-600 hover:bg-green-700 h-11"
+                        <PaynowButton
+                          className="flex-1"
                           onClick={() => handlePay(listing)}
-                        >
-                          <CreditCard className="w-4 h-4 mr-2" />
-                          Pay with Paynow
-                        </Button>
+                        />
                       )}
                       <Button variant="outline" size="sm" className="flex-1">
                         <MessageCircle className="w-4 h-4 mr-1" />

@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { paymentAPI } from '@/services/api';
 import { toast } from 'sonner';
+import { Button } from './ui/button';
+import { ArrowLeft, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 
 interface PaymentStatusProps {
     reference: string;
+    onBack: () => void;
 }
 
-export function PaymentStatus({ reference }: PaymentStatusProps) {
+export function PaymentStatus({ reference, onBack }: PaymentStatusProps) {
     const [status, setStatus] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -40,22 +43,61 @@ export function PaymentStatus({ reference }: PaymentStatusProps) {
         return <p className="text-center p-4">No payment information available.</p>;
     }
 
+    const isPaid = status.paid || status.status?.toLowerCase() === 'paid';
+
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white shadow rounded-lg p-6 text-center">
-                <h2 className="text-xl font-semibold mb-4">Payment {status.paid ? 'Success' : 'Status'}</h2>
-                <p className="mb-2">Reference: {status.reference}</p>
-                <p className="mb-4">Current status: {status.status}</p>
-                {status.redirect_url && (
-                    <p>
-                        <a href={status.redirect_url} className="text-primary underline">
-                            Complete payment in browser
-                        </a>
+        <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
+            <div className="max-w-md w-full bg-card shadow-xl rounded-2xl p-8 text-center animate-in fade-in zoom-in duration-300">
+                <div className="flex justify-center mb-6">
+                    {isPaid ? (
+                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                            <CheckCircle2 className="w-10 h-10 text-green-600" />
+                        </div>
+                    ) : status.status?.toLowerCase() === 'cancelled' ? (
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                            <AlertCircle className="w-10 h-10 text-red-600" />
+                        </div>
+                    ) : (
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Clock className="w-10 h-10 text-blue-600" />
+                        </div>
+                    )}
+                </div>
+
+                <h2 className="text-2xl font-bold mb-2">
+                    Payment {isPaid ? 'Successful' : status.status || 'Status'}
+                </h2>
+
+                <div className="space-y-4 my-6">
+                    <div className="bg-muted p-3 rounded-lg text-sm font-mono break-all text-muted-foreground">
+                        Ref: {status.reference}
+                    </div>
+
+                    <p className="text-muted-foreground">
+                        {isPaid
+                            ? 'Your transaction has been confirmed. Thank you for your purchase!'
+                            : 'We are still processing your request or waiting for confirmation.'}
                     </p>
-                )}
-                {status.instructions && (
-                    <p className="mt-2">{status.instructions}</p>
-                )}
+
+                    {status.redirect_url && !isPaid && (
+                        <Button asChild className="w-full">
+                            <a href={status.redirect_url}>
+                                Complete in Browser
+                            </a>
+                        </Button>
+                    )}
+
+                    {status.instructions && (
+                        <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl text-blue-800 text-sm italic">
+                            {status.instructions}
+                        </div>
+                    )}
+                </div>
+
+                <Button variant="outline" className="w-full mt-4" onClick={onBack}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Marketplace
+                </Button>
             </div>
         </div>
     );

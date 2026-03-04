@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -19,9 +19,23 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
+@app.route('/')
+def index():
+    return jsonify({
+        "message": "ZimLivestock Backend is running",
+        "endpoints": ["/health", "/auth", "/livestock", "/bids", "/payments"]
+    })
+
 @app.route('/health')
 def health():
     return jsonify({"status": "ok", "framework": "flask", "supabase_connected": supabase is not None})
+
+@app.before_request
+def log_request():
+    app.logger.info(f"Request: {request.method} {request.url}")
+    json_data = request.get_json(silent=True)
+    if json_data:
+        app.logger.info(f"Payload: {json_data}")
 
 # Import and register blueprints
 from routes.auth import auth_bp

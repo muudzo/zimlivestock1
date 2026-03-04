@@ -165,3 +165,17 @@ def check_payment_status(poll_url: str) -> dict:
         "paid": status.paid,
         "status": status.status,
     }
+
+
+def verify_paynow_webhook(data: dict) -> bool:
+    """
+    Verifies the SHA512 hash sent by Paynow in a webhook POST.
+    This prevents malicious users from spoofing payment success.
+    """
+    try:
+        paynow = _get_paynow()
+        # The Paynow SDK provides verify_hash(data) to check the signature
+        return paynow.verify_hash(data)
+    except Exception as e:
+        print(f"[ERROR] Paynow hash verification failed: {e}")
+        return False

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Button } from './ui/button';
+import { PaynowButton } from './PaynowButton';
 import { useAuthStore } from '@/stores/authStore';
 import { paymentAPI, livestockAPI } from '@/services/api';
 import { Input } from './ui/input';
@@ -36,10 +38,12 @@ interface BiddingScreenProps {
 
 export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
   const [bidAmount, setBidAmount] = useState('');
-  const [timeLeft, setTimeLeft] = useState('2d 5h 23m');
   const [isLiked, setIsLiked] = useState(false);
   const [bidHistory, setBidHistory] = useState<Bid[]>([]);
   const [isLoadingBids, setIsLoadingBids] = useState(true);
+
+  // Use real timeLeft from item
+  const timeLeft = livestockItem.timeLeft || 'Ended';
 
   const fetchBids = async () => {
     try {
@@ -106,9 +110,16 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
     }
   };
 
-  const handlePayNow = async () => {
+  const isWinning = bidHistory[0] && user && String(bidHistory[0].id).includes(user.id); // Simple check if user is top bidder
+  // In a real app, this should be checked against bidder_id
+  const isWinnerReal = bidHistory[0] && user && String(bidHistory[0].bidder).includes(user.id);
+
+  const canPay = (livestockItem.healthStatus === 'sold' || timeLeft === 'Ended') && isWinning;
+
+  const handlePayNow = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (!isAuthenticated || !user) {
-      alert('Please login to make a payment');
+      toast.error('Please login to make a payment');
       return;
     }
     setIsPaying(true);
@@ -119,11 +130,16 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
         payer_id: parseInt(user.id),
         payment_method: 'web'
       });
-      alert(`Payment started! Reference: ${res.reference}`);
+
+      if (res.redirect_url) {
+        window.location.href = res.redirect_url;
+      } else {
+        toast.success(`Payment started! Ref: ${res.reference}`);
+      }
     } catch (err: any) {
       console.error(err);
       const msg = err?.response?.data?.detail || err?.message || 'Payment failed';
-      alert(msg);
+      toast.error(msg);
     } finally {
       setIsPaying(false);
     }
@@ -168,7 +184,7 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
             </Badge>
           </div>
           <div className="absolute bottom-4 right-4">
-            <Badge variant="destructive" className="bg-red-600 text-base px-3 py-1">
+            <Badge variant={timeLeft === 'Ended' ? 'secondary' : 'destructive'} className="text-base px-3 py-1">
               <Clock className="w-4 h-4 mr-1" />
               {timeLeft}
             </Badge>
@@ -312,33 +328,32 @@ export function BiddingScreen({ onBack, livestockItem }: BiddingScreenProps) {
         </div>
 
         <div className="flex gap-2">
-          <div className="flex-1">
-            <Input
-              type="number"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              placeholder={`Minimum ${formatCurrency(minimumBid)}`}
-              className="h-12 text-center font-semibold"
-              min={minimumBid}
-            />
-          </div>
-          <Button
-            className="h-12 px-8"
-            onClick={handlePlaceBid}
-            disabled={parseInt(bidAmount) < minimumBid}
-          >
-            Place Bid
-          </Button>
-          {/* Pay button shown for logged-in users */}
-          {isAuthenticated && (
-            <Button
-              className="h-12 px-8"
-              variant="secondary"
+          {!canPay ? (
+            <>
+              <div className="flex-1">
+                <Input
+                  type="number"
+                  value={bidAmount}
+                  onChange={(e) => setBidAmount(e.target.value)}
+                  placeholder={`Min ${formatCurrency(minimumBid)}`}
+                  className="h-12 text-center font-semibold"
+                  min={minimumBid}
+                />
+              </div>
+              <Button
+                className="h-12 px-8 flex-1"
+                onClick={handlePlaceBid}
+                disabled={parseInt(bidAmount) < minimumBid || timeLeft === 'Ended'}
+              >
+                Place Bid
+              </Button>
+            </>
+          ) : (
+            <PaynowButton
+              className="h-12 w-full"
               onClick={handlePayNow}
               disabled={isPaying}
-            >
-              {isPaying ? 'Processing...' : 'Pay Now'}
-            </Button>
+            />
           )}
         </div>
       </div>

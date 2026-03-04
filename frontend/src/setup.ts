@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom'
+// @ts-nocheck
 import { vi } from 'vitest'
 
 // Mock IntersectionObserver

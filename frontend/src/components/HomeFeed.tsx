@@ -7,8 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { Clock, MapPin, Weight, Calendar, Eye, Heart, MessageCircle, Loader2 } from 'lucide-react';
 import { formatCurrency, getCategoryIcon } from '@/lib/utils';
-import { livestockAPI } from '@/services/api';
+import { livestockAPI, paymentAPI } from '@/services/api';
 import { LivestockItem } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
+import { toast } from 'sonner';
+import { PaynowButton } from './PaynowButton';
 
 // Remove duplicate interface - using the one from types
 
@@ -194,6 +197,7 @@ interface HomeFeedProps {
 }
 
 export function HomeFeed({ onItemClick }: HomeFeedProps) {
+  const { user, isAuthenticated } = useAuthStore();
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -226,10 +230,32 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
 
   const filteredListings = useMemo(() => {
     if (!listings?.data) return mockListings; // Fallback to mock data
-    return selectedCategory === 'all' 
-      ? listings.data 
-      : listings.data.filter(item => item.category === selectedCategory);
+    return selectedCategory === 'all'
+      ? listings.data
+      : listings.data.filter((item: any) => item.category === selectedCategory);
   }, [listings, selectedCategory]);
+
+  const handleQuickPay = async (item: LivestockItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated || !user) {
+      toast.error('Please login to pay');
+      return;
+    }
+
+    try {
+      const res = await paymentAPI.initiate({
+        livestock_id: item.id,
+        bid_id: 0, // In real app, find winning bid id
+        payer_id: parseInt(user.id),
+        payment_method: 'web'
+      });
+      if (res.redirect_url) {
+        window.location.href = res.redirect_url;
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Quick pay failed');
+    }
+  };
 
   const categories = [
     { id: 'all', label: 'All', icon: '🐄' },
@@ -308,9 +334,9 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
 
       {/* Listings */}
       <div className="px-4 space-y-4">
-        {filteredListings.map((item) => (
-          <Card 
-            key={item.id} 
+        {filteredListings.map((item: any) => (
+          <Card
+            key={item.id}
             className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow card-interactive"
             onClick={() => onItemClick(item)}
           >
@@ -332,12 +358,11 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
                   className="bg-white/90 hover:bg-white p-2 h-auto"
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => toggleLike(item.id, e)}
                 >
-                  <Heart 
-                    className={`w-4 h-4 ${
-                      likedItems.has(item.id) 
-                        ? 'fill-red-500 text-red-500' 
-                        : 'text-gray-600'
-                    }`} 
+                  <Heart
+                    className={`w-4 h-4 ${likedItems.has(item.id)
+                      ? 'fill-red-500 text-red-500'
+                      : 'text-gray-600'
+                      }`}
                   />
                 </Button>
               </div>
@@ -348,7 +373,7 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
                 </Badge>
               </div>
             </div>
-            
+
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-lg">{item.title}</h3>
@@ -357,7 +382,7 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
                   <p className="font-bold text-lg text-primary">{formatCurrency(item.currentBid)}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
@@ -373,7 +398,7 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
                 </div>
               </div>
             </CardHeader>
-            
+
             <CardContent className="pt-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -388,7 +413,7 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <MessageCircle className="w-3 h-3" />
@@ -400,15 +425,24 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-3 flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1">
                   <MessageCircle className="w-4 h-4 mr-1" />
                   Message
                 </Button>
-                <Button size="sm" className="flex-1">
-                  Place Bid
-                </Button>
+                {item.healthStatus === 'sold' && String(item.winner_id) === user?.id ? (
+                  <PaynowButton
+                    className="flex-1 h-9 min-w-0"
+                    onClick={(e: React.MouseEvent) => {
+                      handleQuickPay(item, e);
+                    }}
+                  />
+                ) : (
+                  <Button size="sm" className="flex-1">
+                    Place Bid
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
