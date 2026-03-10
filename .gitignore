@@ -1,32 +1,17 @@
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-.Python
-*.egg
-*.egg-info/
-dist/
-build/
-.eggs/
-
-# Virtual environments
-.venv/
+*$py.class
 venv/
-env/
-
-# Environment variables — NEVER commit this!
+.venv/
 .env
+db.sqlite3
+database.db
 
-# Database files
-*.db
-*.sqlite
-
-# IDE
-.vscode/
-.idea/
-*.swp
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
 
 # OS
 .DS_Store
-Thumbs.db

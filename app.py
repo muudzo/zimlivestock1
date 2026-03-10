@@ -41,10 +41,12 @@ def log_request():
 from routes.auth import auth_bp
 from routes.listings import listings_bp
 from routes.bids import bids_bp
+from routes.payments import payments_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(listings_bp)
 app.register_blueprint(bids_bp)
+app.register_blueprint(payments_bp)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))
