@@ -1,43 +1,38 @@
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
-from supabase import create_client, Client
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
 
-# Supabase configuration
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# CORS — only allow configured origins (falls back to localhost for dev)
+allowed_origins = os.environ.get(
+    "ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"
+).split(",")
+CORS(app, origins=[o.strip() for o in allowed_origins])
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("WARNING: SUPABASE_URL or SUPABASE_KEY not found in environment variables.")
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
-
-@app.route('/')
+@app.route("/")
 def index():
     return jsonify({
         "message": "ZimLivestock Backend is running",
-        "endpoints": ["/health", "/auth", "/livestock", "/bids", "/payments"]
+        "endpoints": ["/health", "/auth", "/livestock", "/bids", "/payments"],
     })
 
-@app.route('/health')
+
+@app.route("/health")
 def health():
-    return jsonify({"status": "ok", "framework": "flask", "supabase_connected": supabase is not None})
+    from db import supabase
+    return jsonify({
+        "status": "ok",
+        "framework": "flask",
+        "supabase_connected": supabase is not None,
+    })
 
-@app.before_request
-def log_request():
-    app.logger.info(f"Request: {request.method} {request.url}")
-    json_data = request.get_json(silent=True)
-    if json_data:
-        app.logger.info(f"Payload: {json_data}")
 
-# Import and register blueprints
+# Register blueprints
 from routes.auth import auth_bp
 from routes.listings import listings_bp
 from routes.bids import bids_bp
@@ -48,6 +43,7 @@ app.register_blueprint(listings_bp)
 app.register_blueprint(bids_bp)
 app.register_blueprint(payments_bp)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    debug = os.environ.get("DEBUG", "false").lower() == "true"
     port = int(os.environ.get("PORT", 8000))
-    app.run(debug=True, port=port)
+    app.run(debug=debug, port=port)

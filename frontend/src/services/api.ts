@@ -1,7 +1,7 @@
 import { LivestockItem } from "@/types";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 let internalToken: string | null = null;
 
@@ -13,10 +13,9 @@ const api = axios.create({
     baseURL: API_BASE_URL,
 });
 
-// Add a request interceptor to attach the token
+// Attach the Bearer token to every request
 api.interceptors.request.use(
     (config) => {
-        // Prefer in-memory token, then fall back to localStorage
         let token = internalToken;
 
         if (!token) {
@@ -25,8 +24,8 @@ api.interceptors.request.use(
                 try {
                     const { state } = JSON.parse(authData);
                     token = state.token;
-                } catch (error) {
-                    console.error('Error parsing auth-storage', error);
+                } catch {
+                    // corrupted localStorage — ignore
                 }
             }
         }
@@ -36,9 +35,7 @@ api.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 export const livestockAPI = {

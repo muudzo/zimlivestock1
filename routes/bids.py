@@ -1,48 +1,60 @@
 from flask import Blueprint, request, jsonify
-import os
-from supabase import create_client, Client
+from db import supabase
+from middleware import require_auth, require_supabase
 
-bids_bp = Blueprint('bids', __name__, url_prefix='/bids')
+bids_bp = Blueprint("bids", __name__, url_prefix="/bids")
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
-@bids_bp.route('/livestock/<int:livestock_id>', methods=['GET'])
+@bids_bp.route("/livestock/<int:livestock_id>", methods=["GET"])
+@require_supabase
 def get_bids(livestock_id):
-    if not supabase:
-        return jsonify({"error": "Supabase not configured"}), 500
-    
-    res = supabase.table('bids').select('*').eq('livestock_id', livestock_id).order('amount', desc=True).execute()
+    res = (
+        supabase.table("bids")
+        .select("*")
+        .eq("livestock_id", livestock_id)
+        .order("amount", desc=True)
+        .execute()
+    )
     return jsonify(res.data)
 
-@bids_bp.route('', methods=['POST'])
-def place_bid():
-    if not supabase:
-        return jsonify({"error": "Supabase not configured"}), 500
 
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"detail": "Not authenticated"}), 401
-    
-    token = auth_header.replace('Bearer ', '')
-    try:
-        user_res = supabase.auth.get_user(token)
-        user = user_res.user
-    except:
-        return jsonify({"detail": "Invalid token"}), 401
-
+@bids_bp.route("", methods=["POST"])
+@require_auth
+def place_bid(current_user=None):
     data = request.json
-    # Assign bidder_id from authenticated user
-    data['bidder_id'] = user.id
-    
-    # Basic validation: check if higher than current highest bid
+    if not data:
+        return jsonify({"detail": "Request body required"}), 400
+
+    livestock_id = data.get("livestock_id")
+    amount = data.get("amount")
+
+    if not livestock_id or not amount:
+        return jsonify({"detail": "livestock_id and amount are required"}), 400
+
     try:
-        current_bids = supabase.table('bids').select('amount').eq('livestock_id', data['livestock_id']).order('amount', desc=True).limit(1).execute()
-        if current_bids.data and data['amount'] <= current_bids.data[0]['amount']:
+        amount = float(amount)
+        if amount <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"detail": "Amount must be a positive number"}), 400
+
+    try:
+        current_bids = (
+            supabase.table("bids")
+            .select("amount")
+            .eq("livestock_id", livestock_id)
+            .order("amount", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if current_bids.data and amount <= current_bids.data[0]["amount"]:
             return jsonify({"detail": "Bid must be higher than the current highest bid"}), 400
-            
-        res = supabase.table('bids').insert(data).execute()
+
+        res = (
+            supabase.table("bids")
+            .insert({"livestock_id": livestock_id, "amount": amount, "bidder_id": current_user.id})
+            .execute()
+        )
         return jsonify(res.data[0]), 201
-    except Exception as e:
-        return jsonify({"detail": str(e)}), 400
+    except Exception:
+        return jsonify({"detail": "Failed to place bid"}), 500
