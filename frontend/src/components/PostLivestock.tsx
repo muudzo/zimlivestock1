@@ -42,8 +42,15 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
   };
 
   const handleImageUpload = () => {
-    // Simulate image upload
-    const newImage = `https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?w=400&h=300&fit=crop&crop=center`;
+    // TODO: Replace with real file upload (e.g. Supabase Storage)
+    const placeholders: Record<string, string> = {
+      cattle: 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=400&h=300&fit=crop&crop=center',
+      goats: 'https://images.unsplash.com/photo-1524024973431-2ad916746881?w=400&h=300&fit=crop&crop=center',
+      sheep: 'https://images.unsplash.com/photo-1484557985045-edf25e08da73?w=400&h=300&fit=crop&crop=center',
+      pigs: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&h=300&fit=crop&crop=center',
+      chickens: 'https://images.unsplash.com/photo-1612170153139-6f881ff067e0?w=400&h=300&fit=crop&crop=center',
+    };
+    const newImage = placeholders[formData.category] || placeholders.cattle;
     setImages(prev => [...prev, newImage]);
   };
 
@@ -64,7 +71,7 @@ export function PostLivestock({ onBack }: PostLivestockProps) {
       await livestockAPI.createListing({
         ...formData,
         startingPrice: parseFloat(formData.startingPrice),
-        imageUrl: images[0] || 'https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?w=400&h=300&fit=crop&crop=center',
+        imageUrl: images[0] || '',
         auctionEndDate: auctionEndDate.toISOString(),
       });
 

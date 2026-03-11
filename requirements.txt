@@ -1,15 +1,9 @@
-fastapi
-uvicorn
-sqlmodel
-pydantic
-python-multipart
-python-jose[cryptography]
-passlib[bcrypt]
-httpx
+flask
+flask-cors
+supabase
 python-dotenv
 paynow
+pydantic
 
-# testing tools
+# testing
 pytest
-pytest-asyncio
-email-validator

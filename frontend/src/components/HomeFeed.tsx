@@ -13,8 +13,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import { PaynowButton } from './PaynowButton';
 
-// Remove duplicate interface - using the one from types
-
+// Fallback mock data with correct animal images per category
 const mockListings: LivestockItem[] = [
   {
     id: '1',
@@ -26,7 +25,7 @@ const mockListings: LivestockItem[] = [
     currentBid: 1200,
     startingPrice: 800,
     timeLeft: '2d 5h',
-    imageUrl: 'https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?w=400&fit=crop&crop=center',
+    imageUrl: 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=400&fit=crop&crop=center',
     seller: {
       id: '1',
       name: 'T. Chikwanha',
@@ -55,7 +54,7 @@ const mockListings: LivestockItem[] = [
     currentBid: 950,
     startingPrice: 700,
     timeLeft: '1d 12h',
-    imageUrl: 'https://images.unsplash.com/photo-1596003844243-b8ffd9b04095?w=400&fit=crop&crop=center',
+    imageUrl: 'https://images.unsplash.com/photo-1546445317-29f4545e9d53?w=400&fit=crop&crop=center',
     seller: {
       id: '2',
       name: 'M. Ncube',
@@ -84,7 +83,7 @@ const mockListings: LivestockItem[] = [
     currentBid: 285,
     startingPrice: 180,
     timeLeft: '3d 8h',
-    imageUrl: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&fit=crop&crop=center',
+    imageUrl: 'https://images.unsplash.com/photo-1524024973431-2ad916746881?w=400&fit=crop&crop=center',
     seller: {
       id: '3',
       name: 'S. Mpofu',
@@ -113,7 +112,7 @@ const mockListings: LivestockItem[] = [
     currentBid: 120,
     startingPrice: 80,
     timeLeft: '4h 30m',
-    imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400&fit=crop&crop=center',
+    imageUrl: 'https://images.unsplash.com/photo-1612170153139-6f881ff067e0?w=400&fit=crop&crop=center',
     seller: {
       id: '4',
       name: 'A. Mugabe',
@@ -142,7 +141,7 @@ const mockListings: LivestockItem[] = [
     currentBid: 420,
     startingPrice: 300,
     timeLeft: '1d 8h',
-    imageUrl: 'https://images.unsplash.com/photo-1500595046743-cd271d694e30?w=400&fit=crop&crop=center',
+    imageUrl: 'https://images.unsplash.com/photo-1484557985045-edf25e08da73?w=400&fit=crop&crop=center',
     seller: {
       id: '5',
       name: 'K. Moyo',
@@ -171,7 +170,7 @@ const mockListings: LivestockItem[] = [
     currentBid: 380,
     startingPrice: 250,
     timeLeft: '5d 2h',
-    imageUrl: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&fit=crop&crop=center',
+    imageUrl: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&fit=crop&crop=center',
     seller: {
       id: '6',
       name: 'P. Chitepo',
@@ -201,7 +200,6 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Fetch livestock listings with React Query
   const { data: listings, isLoading, error } = useQuery(
     ['livestock', selectedCategory],
     () => livestockAPI.getListings({
@@ -209,8 +207,8 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
       limit: 20,
     }),
     {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
       retry: 2,
     }
   );
@@ -229,7 +227,7 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
   }, []);
 
   const filteredListings = useMemo(() => {
-    if (!listings?.data) return mockListings; // Fallback to mock data
+    if (!listings?.data) return mockListings;
     return selectedCategory === 'all'
       ? listings.data
       : listings.data.filter((item: any) => item.category === selectedCategory);
@@ -245,8 +243,7 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
     try {
       const res = await paymentAPI.initiate({
         livestock_id: item.id,
-        bid_id: 0, // In real app, find winning bid id
-        payer_id: parseInt(user.id),
+        bid_id: 0,
         payment_method: 'web'
       });
       if (res.redirect_url) {
@@ -266,7 +263,6 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
     { id: 'chickens', label: 'Chickens', icon: '🐔' },
   ];
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="space-y-4 pb-20">
@@ -284,7 +280,6 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="space-y-4 pb-20">
@@ -295,7 +290,7 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
         <div className="flex items-center justify-center py-12">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
-              <span className="text-2xl">⚠️</span>
+              <span className="text-2xl">!</span>
             </div>
             <h3 className="text-lg font-semibold">Failed to load listings</h3>
             <p className="text-muted-foreground">Please try again later</p>
@@ -403,13 +398,13 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={item.seller.avatar} />
-                    <AvatarFallback>{item.seller.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={item.seller?.avatar} />
+                    <AvatarFallback>{item.seller?.name?.charAt(0) || '?'}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium">{item.seller.name}</p>
-                    {item.seller.verified && (
-                      <p className="text-xs text-primary">✓ Verified</p>
+                    <p className="text-sm font-medium">{item.seller?.name || 'Unknown'}</p>
+                    {item.seller?.verified && (
+                      <p className="text-xs text-primary">Verified</p>
                     )}
                   </div>
                 </div>
@@ -417,11 +412,11 @@ export function HomeFeed({ onItemClick }: HomeFeedProps) {
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <MessageCircle className="w-3 h-3" />
-                    {item.bidCount}
+                    {item.bidCount || 0}
                   </div>
                   <div className="flex items-center gap-1">
                     <Eye className="w-3 h-3" />
-                    {item.views}
+                    {item.views || 0}
                   </div>
                 </div>
               </div>

@@ -1,54 +1,84 @@
 from flask import Blueprint, request, jsonify
-import os
-from supabase import create_client, Client
+from db import supabase
+from middleware import require_auth, require_supabase
 
-listings_bp = Blueprint('listings', __name__, url_prefix='/livestock')
+listings_bp = Blueprint("listings", __name__, url_prefix="/livestock")
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+MAX_TITLE_LEN = 200
+MAX_DESCRIPTION_LEN = 2000
 
-@listings_bp.route('', methods=['GET'])
+
+@listings_bp.route("", methods=["GET"])
+@require_supabase
 def get_listings():
-    if not supabase:
-        return jsonify({"error": "Supabase not configured"}), 500
-    
-    category = request.args.get('category')
-    query = supabase.table('livestock_items').select('*')
-    
+    category = request.args.get("category")
+    query = supabase.table("livestock_items").select("*")
+
     if category:
-        query = query.eq('category', category)
-    
+        query = query.eq("category", category)
+
     res = query.execute()
     return jsonify(res.data)
 
-@listings_bp.route('/<int:item_id>', methods=['GET'])
+
+@listings_bp.route("/<int:item_id>", methods=["GET"])
+@require_supabase
 def get_listing(item_id):
-    if not supabase:
-        return jsonify({"error": "Supabase not configured"}), 500
-        
-    res = supabase.table('livestock_items').select('*, bids(*)').eq('id', item_id).single().execute()
+    res = (
+        supabase.table("livestock_items")
+        .select("*, bids(*)")
+        .eq("id", item_id)
+        .single()
+        .execute()
+    )
     return jsonify(res.data)
 
-@listings_bp.route('', methods=['POST'])
-def create_listing():
-    if not supabase:
-        return jsonify({"error": "Supabase not configured"}), 500
 
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"detail": "Not authenticated"}), 401
-    
-    token = auth_header.replace('Bearer ', '')
-    try:
-        user_res = supabase.auth.get_user(token)
-        user = user_res.user
-    except:
-        return jsonify({"detail": "Invalid token"}), 401
-
+@listings_bp.route("", methods=["POST"])
+@require_auth
+def create_listing(current_user=None):
     data = request.json
-    # Assign seller_id from authenticated user
-    data['seller_id'] = user.id
-    
-    res = supabase.table('livestock_items').insert(data).execute()
-    return jsonify(res.data[0]), 201
+    if not data:
+        return jsonify({"detail": "Request body required"}), 400
+
+    title = (data.get("title") or "").strip()
+    if not title or len(title) > MAX_TITLE_LEN:
+        return jsonify({"detail": f"Title is required (max {MAX_TITLE_LEN} chars)"}), 400
+
+    description = (data.get("description") or "").strip()
+    if len(description) > MAX_DESCRIPTION_LEN:
+        return jsonify({"detail": f"Description too long (max {MAX_DESCRIPTION_LEN} chars)"}), 400
+
+    price = data.get("startingPrice")
+    try:
+        price = float(price)
+        if price <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"detail": "Starting price must be a positive number"}), 400
+
+    allowed_categories = {"cattle", "goats", "sheep", "pigs", "chickens", "other"}
+    category = data.get("category", "").lower()
+    if category not in allowed_categories:
+        return jsonify({"detail": f"Category must be one of: {', '.join(sorted(allowed_categories))}"}), 400
+
+    insert_data = {
+        "title": title,
+        "description": description,
+        "breed": (data.get("breed") or "").strip(),
+        "age": (data.get("age") or "").strip(),
+        "weight": (data.get("weight") or "").strip(),
+        "location": (data.get("location") or "").strip(),
+        "category": category,
+        "startingPrice": price,
+        "imageUrl": (data.get("imageUrl") or "").strip(),
+        "healthStatus": data.get("healthStatus", "pending"),
+        "auctionEndDate": data.get("auctionEndDate"),
+        "seller_id": current_user.id,
+    }
+
+    try:
+        res = supabase.table("livestock_items").insert(insert_data).execute()
+        return jsonify(res.data[0]), 201
+    except Exception:
+        return jsonify({"detail": "Failed to create listing"}), 500

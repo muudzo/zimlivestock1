@@ -23,7 +23,7 @@ export interface LivestockItem {
     views: number;
     category: 'cattle' | 'goats' | 'sheep' | 'pigs' | 'chickens';
     description: string;
-    healthStatus: 'verified' | 'pending' | 'rejected';
+    healthStatus: 'verified' | 'pending' | 'rejected' | 'sold';
     createdAt: Date;
     updatedAt: Date;
     auctionEndDate: Date;
