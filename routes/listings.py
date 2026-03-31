@@ -10,14 +10,20 @@ MAX_DESCRIPTION_LEN = 2000
 
 @listings_bp.route("", methods=["GET"])
 @require_supabase
+@monitor_performance # Commit 10: Performance Monitoring
 def get_listings():
     category = request.args.get("category")
-    query = supabase.table("livestock_items").select("*")
+    limit = request.args.get("limit", default=20, type=int)
+    offset = request.args.get("offset", default=0, type=int)
+
+    # Commit 7: Select only necessary fields for the list view (Scalability)
+    fields = "id, title, breed, location, startingPrice, currentBid, category, imageUrl, healthStatus, auctionEndDate"
+    query = supabase.table("livestock_items").select(fields)
 
     if category:
         query = query.eq("category", category)
 
-    res = query.execute()
+    res = query.range(offset, offset + limit - 1).execute()
     return jsonify(res.data)
 
 
@@ -62,6 +68,18 @@ def create_listing(current_user=None):
     if category not in allowed_categories:
         return jsonify({"detail": f"Category must be one of: {', '.join(sorted(allowed_categories))}"}), 400
 
+    idempotency_key = data.get("idempotency_key")
+    if idempotency_key:
+        existing = (
+            supabase.table("livestock_items")
+            .select("id")
+            .eq("seller_id", current_user.id)
+            .eq("idempotency_key", idempotency_key)
+            .execute()
+        )
+        if existing.data:
+            return jsonify(existing.data[0]), 200
+
     insert_data = {
         "title": title,
         "description": description,
@@ -75,6 +93,7 @@ def create_listing(current_user=None):
         "healthStatus": data.get("healthStatus", "pending"),
         "auctionEndDate": data.get("auctionEndDate"),
         "seller_id": current_user.id,
+        "idempotency_key": idempotency_key,
     }
 
     try:

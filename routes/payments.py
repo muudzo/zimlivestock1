@@ -15,6 +15,7 @@ payments_bp = Blueprint("payments", __name__, url_prefix="/payments")
 
 @payments_bp.route("/initiate", methods=["POST"])
 @require_auth
+@rate_limit(limit=3, window=60) # Commit 8: Limit payments to 3 per minute
 def initiate_payment(current_user=None):
     data = request.json
     if not data:
@@ -38,8 +39,48 @@ def initiate_payment(current_user=None):
     if not item_res.data:
         return jsonify({"detail": "Livestock item not found"}), 404
 
+    idempotency_key = data.get("idempotency_key")
+    
+    # Commit 5: Check for existing payment with this idempotency key or bid_id
+    if idempotency_key:
+        existing = (
+            supabase.table("payments")
+            .select("*")
+            .eq("idempotency_key", idempotency_key)
+            .eq("payer_id", current_user.id)
+            .execute()
+        )
+        if existing.data:
+            payment = existing.data[0]
+            return jsonify({
+                "reference": payment["merchant_reference"],
+                "status": payment["status"],
+                "paid": payment["status"] == "paid",
+                "redirect_url": payment.get("paynow_redirect_url"),
+                "instructions": payment.get("paynow_instructions"),
+            }), 200
+
     item = item_res.data
-    reference = f"ZL-{livestock_id}-{uuid.uuid4().hex[:8].upper()}"
+    # If no idempotency_key, we can still try to be idempotent based on bid_id if it's the same user
+    if bid_id:
+        existing_bid_pay = (
+            supabase.table("payments")
+            .select("*")
+            .eq("bid_id", bid_id)
+            .eq("status", "pending")
+            .execute()
+        )
+        if existing_bid_pay.data:
+            payment = existing_bid_pay.data[0]
+            return jsonify({
+                "reference": payment["merchant_reference"],
+                "status": "pending",
+                "paid": False,
+                "redirect_url": payment.get("paynow_redirect_url"),
+                "instructions": payment.get("paynow_instructions"),
+            }), 200
+
+    reference = f"ZL-{livestock_id}-{(idempotency_key or uuid.uuid4().hex)[:8].upper()}"
     description = f"ZimLivestock: {item['title']} (ID #{item['id']})"
     amount = float(item.get("currentBid") or item.get("startingPrice") or 0)
 
@@ -55,6 +96,7 @@ def initiate_payment(current_user=None):
         "merchant_reference": reference,
         "payment_method": payment_method,
         "status": "pending",
+        "idempotency_key": idempotency_key,
         "created_at": datetime.utcnow().isoformat(),
     }
 
@@ -127,18 +169,22 @@ def paynow_webhook():
             update_data["paynow_reference"] = paynow_ref
 
             if payment["livestock_id"]:
-                supabase.table("livestock_items").update(
-                    {"healthStatus": "sold"}
-                ).eq("id", payment["livestock_id"]).execute()
-
+                # Commit 9: Double check if already sold to ensure idempotency
+                item_check = supabase.table("livestock_items").select("healthStatus").eq("id", payment["livestock_id"]).single().execute()
+                if item_check.data and item_check.data.get("healthStatus") != "sold":
+                    supabase.table("livestock_items").update(
+                        {"healthStatus": "sold"}
+                    ).eq("id", payment["livestock_id"]).execute()
     elif status_raw in ("cancelled", "disputed"):
         update_data["status"] = "cancelled"
     elif status_raw == "failed":
         update_data["status"] = "failed"
 
-    supabase.table("payments").update(update_data).eq(
-        "merchant_reference", reference
-    ).execute()
+    # Only update if status actually changed or is pending (Commit 9)
+    if payment["status"] == "pending" or "status" in update_data:
+        supabase.table("payments").update(update_data).eq(
+            "merchant_reference", reference
+        ).execute()
 
     return jsonify({"received": True}), 200
 
